@@ -1,0 +1,183 @@
+/* Anchor Down panel, injected into the YES page.
+   Every rule is scoped to #anchorDownPanel so it can't restyle YES, and the
+   ID selectors outrank YES's own styles so they don't leak into the panel. */
+
+#anchorDownPanel {
+  position: fixed;
+  left: 16px;
+  bottom: 16px;
+  z-index: 2147483647;
+  width: 290px;
+  background: #fff;
+  color: #111;
+  border: 2px solid #866d4b;
+  border-radius: 8px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+  font: 13px/1.4 -apple-system, system-ui, sans-serif;
+  text-align: left;
+}
+
+#anchorDownPanel [hidden] {
+  display: none !important;
+}
+
+#anchorDownPanel button,
+#anchorDownPanel input {
+  font: inherit;
+}
+
+/* Header: drag handle and minimize button */
+
+#anchorDownPanel .ad-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 6px 12px;
+  background: #866d4b;
+  color: #fff;
+  border-radius: 5px 5px 0 0;
+  cursor: move;
+  user-select: none;
+}
+
+#anchorDownPanel .ad-title {
+  font-weight: 600;
+}
+
+#anchorDownPanel .ad-min {
+  width: 22px;
+  height: 22px;
+  line-height: 1;
+  border: 0;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.2);
+  color: #fff;
+  cursor: pointer;
+}
+
+/* Body */
+
+#anchorDownPanel .ad-content {
+  padding: 10px 12px 12px;
+}
+
+#anchorDownPanel .ad-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+#anchorDownPanel .ad-state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+#anchorDownPanel .ad-dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+#anchorDownPanel .ad-dot.is-firing {
+  animation: anchorDownPulse 0.8s ease-in-out infinite;
+}
+
+#anchorDownPanel .ad-countdown {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+#anchorDownPanel .ad-progress {
+  height: 6px;
+  margin-top: 8px;
+  background: #eee;
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+#anchorDownPanel .ad-progress-fill {
+  width: 0;
+  height: 100%;
+  background: #d97706;
+  transition: width 0.25s linear;
+}
+
+#anchorDownPanel .ad-body {
+  margin-top: 10px;
+}
+
+#anchorDownPanel .ad-label {
+  display: block;
+  margin-bottom: 6px;
+}
+
+#anchorDownPanel .ad-label input {
+  display: block;
+  margin-top: 4px;
+}
+
+#anchorDownPanel .ad-buttons {
+  display: flex;
+  gap: 6px;
+}
+
+#anchorDownPanel .ad-arm,
+#anchorDownPanel .ad-check {
+  padding: 4px 14px;
+  cursor: pointer;
+}
+
+#anchorDownPanel .ad-status {
+  margin-top: 8px;
+}
+
+#anchorDownPanel .ad-classes {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+#anchorDownPanel .ad-classes li {
+  margin: 2px 0;
+  font-weight: 600;
+}
+
+#anchorDownPanel .ad-ok {
+  color: #16a34a;
+}
+
+#anchorDownPanel .ad-bad {
+  color: #dc2626;
+}
+
+#anchorDownPanel .ad-warn {
+  margin-top: 4px;
+  color: #b45309;
+}
+
+#anchorDownPanel .ad-warn:empty,
+#anchorDownPanel .ad-note:empty,
+#anchorDownPanel .ad-small:empty {
+  display: none;
+}
+
+#anchorDownPanel .ad-small {
+  margin-top: 2px;
+  color: #555;
+  font-size: 12px;
+}
+
+#anchorDownPanel .ad-note {
+  margin-top: 4px;
+  color: #b00020;
+}
+
+@keyframes anchorDownPulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}

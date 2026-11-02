@@ -17,6 +17,10 @@
       "32": "icons/icon32.png"
     }
   },
+  "permissions": [
+    "alarms",
+    "notifications"
+  ],
   "background": {
     "service_worker": "src/background.js"
   },
@@ -27,7 +31,11 @@
         "https://more.app.vanderbilt.edu/more/SearchClasses.action*"
       ],
       "js": [
-        "src/enroll.js"
+        "src/enroll.js",
+        "src/timer.js"
+      ],
+      "css": [
+        "src/panel.css"
       ],
       "run_at": "document_end"
     }
