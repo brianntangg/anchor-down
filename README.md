@@ -1,66 +1,169 @@
-# anchor-down
+# Anchor Down
 
 Enroll in your entire Vanderbilt YES cart the moment registration opens.
 
-## Install
+Anchor Down is a Chrome extension. You put your classes in your YES cart, set your enrollment time, and click **Arm**. At your time, it sends YES the same enrollment request the **Enroll** button does, for every class in your cart, and keeps retrying for a few seconds. It skips the slow YES page, so your request lands as soon as registration opens. Afterward, it tells you which classes went through.
 
-1. Clone or download this repo.
-2. Open `chrome://extensions` and turn on **Developer mode** (top right).
-3. Click **Load unpacked** and select this folder.
-4. Open YES class search. An **Anchor Down** panel should appear in the bottom left. If it doesn't, refresh the page.
+You don't have to be at your computer when your time comes. It just has to be on, with Chrome open.
 
-Don't press **Alt+X** (**Option+X** on Mac) to test it. Every press sends a real enrollment request for your whole cart.
+## What you need
 
-To change the shortcut, go to `chrome://extensions/shortcuts`.
+- **Google Chrome** on a computer (not a phone or tablet).
+- Your **YES login**.
+- Your **enrollment time**. YES shows it on the class search page, in the enrollment dates link.
 
-## Use
+## Install (one time)
 
-### Before registration
+1. **Download it.** On this repo's GitHub page, click **Code → Download ZIP**, then unzip it. (Or `git clone` it.) Keep the folder somewhere permanent, like Documents. Chrome loads the extension from that folder every time, so don't delete or move it.
+2. **Load it into Chrome.**
+   1. Go to `chrome://extensions` (type it in the address bar).
+   2. Turn on **Developer mode** (top right).
+   3. Click **Load unpacked**, and select the folder that contains `manifest.json`. That's the unzipped folder itself, not the ZIP and not a folder above it.
+3. **Pin it.** Click Chrome's puzzle-piece icon (top right) and pin **Anchor Down**, so its gold anchor icon stays in your toolbar.
+4. **Allow notifications.** On a Mac, open System Settings → Notifications → Google Chrome and turn on **Allow notifications**. On Windows, make sure Chrome's notifications aren't turned off in Settings → System → Notifications.
+5. **Check it works.** Open YES class search at
+   `https://more.app.vanderbilt.edu/more/SearchClasses!input.action`
+   An **Anchor Down** panel should appear in the bottom-left corner. If it doesn't, refresh the page.
 
-- Add every class you want to your YES cart. Fill in any per-class options, such as grad/undergrad.
-- Remove conflicts, such as two classes at the same time or two sections of the same course. What happens with conflicts in the cart is undefined.
-- Every class is requested with **waitlist on**. If a class is full, you'll be added to its waitlist.
-- Tip: put your most competitive classes in the cart first. Add the easier ones by hand afterward.
+Chrome lists three permissions for Anchor Down:
 
-### Automatic (recommended)
+- **alarms:** wake it up just before your time.
+- **notifications:** tell you what's happening.
+- **power:** keep your computer from sleeping while it's armed.
 
-1. Open YES class search. In the **Anchor Down** panel in the bottom left, set your enrollment date and time and click **Arm**. The time is **Central time**, like YES, even if your laptop is set to another time zone. It defaults to today at 7:00:00 AM CT, and if you're somewhere else, the panel also shows the time where you are.
+It can't see any other site, and it only ever adds the classes in your cart. It never drops or swaps a class.
 
-   The panel then lists the classes in your cart, so you can check them. It warns you if the cart is empty, has more than one section of the same course (it would try to enroll in every section), or would take you over the usual 18-hour limit.
+## Quick start: registration day
 
-   To run these checks without arming, click **Check**.
-2. Leave the YES tab open and your laptop lid open. Anchor Down keeps your computer awake until it finishes; the screen may still turn off or lock, which is fine. You can use other tabs and windows; 20 seconds before your time, Anchor Down brings the YES tab to the front.
-3. Three minutes before your time, it refreshes the YES page so your login is fresh, and stays armed through the refresh. You can also refresh it yourself; it stays armed as long as it's the same tab.
-4. It starts 5 seconds before your time and tries every 2 seconds. It stops as soon as your cart is empty, or 30 seconds after your time at the latest. Then it compares your cart from before and after and lists each class:
-   - **✓ CS 3251: enrolled or waitlisted.** It left your cart, so it went through.
-   - **✗ ECON 1010: still in your cart.** It didn't go through. Enroll in it by hand right away.
+### Days before
 
-   The overall result is **Success** (every class went through), **Partly done** (some did) or **No change** (none did), with a sound. Refresh to see which classes are enrolled and which are waitlisted.
+1. Put every class you want in your YES cart. Fill in any options YES asks for, such as grad/undergrad.
+2. Remove conflicts: two classes at the same time, or two sections of the same course. Anchor Down tries to enroll in everything in the cart.
+3. Look up your enrollment date and time in YES.
 
-You can follow along without looking at the panel:
+### The night before, or any time before your window
 
-- **Panel:** a colored state (Not armed, Armed, Enrolling, Success, No change), a live countdown, the time of the last login check, and a progress bar with each attempt's time while it runs.
-- **Toolbar popup:** click the Anchor Down icon from any tab to see the status, countdown and result, with **Check**, **Cancel** and **Go to YES tab**.
-- **Toolbar badge:** the Anchor Down icon counts down (`3h`, `12m`, `45s`), shows `GO` while enrolling, then `✓` or `!`. Pin the extension from Chrome's puzzle-piece menu to keep it visible.
-- **Tab title:** shows the countdown, like `⏳ 4:57`, and then the result.
-- **Notifications:** when you arm it, 1 minute before, when it starts enrolling, and with the result. You also get one if your login expires. Click a notification to jump back to the YES tab. On a Mac, allow notifications for Google Chrome in System Settings → Notifications, and turn off Focus / Do Not Disturb.
+1. Open YES class search and find the Anchor Down panel.
+2. Set your **enrollment date and time** in **Central time**, even if you're somewhere else. The panel also shows your local time.
+3. Click **Arm**. Check that the panel lists your classes, shows **✓ Logged in**, and has no orange warnings.
+4. Leave **Chrome open**, the **YES tab open** and the **laptop lid open**, ideally plugged in. You can use other tabs and windows, and the screen can turn off or lock.
 
-Drag the panel by its header, or click **–** to shrink it to just the status.
+**At your time**, nothing is needed from you. Anchor Down brings the YES tab to the front, enrolls, and notifies you with the result.
 
-If your login expires while it waits, it refreshes the page to sign you back in (not in the last minute). If YES needs you to log in again, you get a notification; log in and go back to class search, and the timer is still armed.
+### Afterward
 
-You can hold **Alt+X** while it runs as a backup. Both share the same 2-second limit, so this won't send extra requests.
+1. Read the result in the panel or the popup (see [Results](#results)).
+2. Refresh YES and check your schedule. YES shows which classes are enrolled and which are waitlisted.
+3. Enroll by hand in anything marked **✗ still in your cart**, right away.
 
-### Manual (Alt+X)
+## How it works while armed
 
-1. Refresh the page a minute before your time so your session is fresh.
-2. About 5 seconds before your enrollment time, start holding **Alt+X**. The enrollment dates link shows **Attempts: N**, going up with each attempt. The extension sends at most one attempt every 2 seconds, because YES flags faster requests.
-3. About 5 seconds after your time opens, refresh the page and check your schedule. Also look for error popups in the bottom right.
-4. If it didn't work, try once more. After that, enroll the normal way.
+| When | What happens |
+| --- | --- |
+| When you click Arm | Checks your login and cart, and starts keeping your computer awake |
+| Every 4 minutes | Checks your login again. If it has expired, it refreshes the page to sign you back in |
+| 3 minutes before | Refreshes the YES page so your login is fresh. It stays armed |
+| 1 minute before | Notification: 1 minute to go |
+| 20 seconds before | Brings the YES tab and its window to the front |
+| 5 seconds before | Starts enrolling: one request for your whole cart every 2 seconds |
+| Once your cart is empty, or 30 seconds after your time | Stops, and compares your cart before and after |
 
-Open DevTools (Console tab) to see each attempt's term code, class numbers and job status.
+It starts a few seconds early because YES's clock and yours can differ slightly. Requests sent before registration opens are simply turned down. It never sends more than one request every 2 seconds, because YES flags faster requests.
 
-## Tests
+**These stop it:** closing the YES tab, quitting Chrome, closing the laptop lid, or the computer losing power. Refreshing the tab, or logging back in and returning to class search in the same tab, does not stop it.
+
+## The panel
+
+- **Enrollment date and time (Central):** when registration opens for you. It defaults to today at 7:00:00 AM CT.
+- **Arm:** starts the timer. It changes to **Cancel** while armed.
+- **Check:** checks your login and cart without arming.
+- **Drag** the panel by its brown header. Click **–** to shrink it to just the status.
+
+### Warnings (orange)
+
+- **Your cart is empty.**
+- **More than one section of the same course** is in your cart. It would try to enroll in all of them.
+- **Over the usual 18-hour limit:** your enrolled classes plus your cart, so YES may turn some down.
+- **Couldn't read your cart.** Refresh the page.
+
+A **red note** means your login may have expired. It refreshes the page itself, but you can too.
+
+## Results
+
+Each class in your cart gets a line:
+
+- **✓ CS 3251: enrolled or waitlisted.** It left your cart, so it went through.
+- **✗ ECON 1010: still in your cart.** It didn't go through. Enroll by hand now. Common reasons: the class is full with no waitlist, a time conflict, a missing prerequisite or permission, or the hours limit.
+
+The overall result is one of:
+
+- **Success:** every class went through.
+- **Partly done:** some did. The ones left are named.
+- **No change:** none did. Enroll by hand right away.
+- **Finished:** it couldn't check your classes afterward. Refresh YES to see your schedule.
+
+Every class is requested with **waitlist on**, so a full class with a waitlist adds you to the waitlist, and counts as ✓.
+
+## Following along from anywhere
+
+- **Toolbar popup:** click the anchor icon from any tab to see the status, countdown and results, with **Check**, **Cancel** and **Go to YES tab**. With no YES tab open, it offers **Open YES**.
+- **Toolbar badge:** counts down (`3h`, `12m`, `45s`), shows `GO` while enrolling, then `✓` or `!`.
+- **Tab title:** shows the countdown, like `⏳ 4:57`, then the result.
+- **Notifications:**
+  - when you arm it
+  - 1 minute before
+  - when it starts enrolling
+  - the result
+  - if your login expires
+  - if the YES tab can't enroll
+
+  Click one to jump to the YES tab.
+- **Sound:** two rising beeps for success, two falling beeps otherwise. After a page refresh, the sound only works once you've clicked somewhere on the page.
+
+## Manual mode (Alt+X)
+
+Holding **Alt+X** (**Option+X** on a Mac) sends the same request by hand, at most once every 2 seconds:
+
+1. Refresh YES class search a minute before your time.
+2. About 5 seconds before, start holding **Alt+X**. The enrollment dates link counts **Attempts: N**.
+3. About 5 seconds after your time, let go, refresh and check your schedule.
+
+**Every press sends a real enrollment request for your whole cart**, so don't press it just to try it out. You can hold it as a backup while the timer runs; they share the 2-second limit. To change the shortcut, go to `chrome://extensions/shortcuts`.
+
+## Troubleshooting
+
+**The panel doesn't appear.**
+
+- Make sure you're on YES **class search** (link above), then refresh.
+- Check that Anchor Down is turned on at `chrome://extensions`.
+- If you just installed or reloaded the extension, refresh the YES page.
+
+**"Anchor Down can't enroll" notification.** The YES tab isn't on class search, or isn't armed, usually because YES asked you to log in again. Log in, go back to class search in the same tab, and it re-arms itself. If the panel says **Not armed**, arm it again.
+
+**"YES login may have expired" notification.** It tries to refresh the page and sign you back in. If YES asks you to log in, do so and return to class search.
+
+**I didn't get any notifications.**
+
+- Check your computer's notification settings for Chrome (see Install).
+- Turn off Focus / Do Not Disturb.
+
+**It didn't enroll at my time.**
+
+- Check the panel or popup for the result.
+- If your computer slept, the lid was closed or Chrome was closed, it couldn't run. Enroll by hand.
+
+**A class says "still in your cart."** YES turned it down; see the reasons under [Results](#results). Enroll by hand, or pick another section.
+
+**"Your cart didn't change, so I can't tell which classes."** Your hours went up, but it couldn't match classes. Refresh YES and check your schedule.
+
+**Something else went wrong.** At `chrome://extensions`, click **Errors** on the Anchor Down card and note what it says. Also open DevTools on the YES page (Console tab) to see each attempt's details.
+
+## Updating and uninstalling
+
+- **Update:** download the new version into the same folder (or `git pull`), then click the reload arrow on the Anchor Down card at `chrome://extensions`, and refresh YES.
+- **Uninstall:** click **Remove** on the Anchor Down card at `chrome://extensions`.
+
+## Development
 
 The tests run the extension against a fake YES page, so they don't need Vanderbilt or Chrome. They need [Node.js](https://nodejs.org) 20 or newer.
 
@@ -69,4 +172,8 @@ npm install
 npm test
 ```
 
-Chrome only loads the files listed in `manifest.json`, so `tests/`, `package.json` and `node_modules/` don't affect the extension.
+`npm test` runs everything twice, the second time as if your computer were in California, to catch time zone bugs. Chrome only loads the files listed in `manifest.json`, so `tests/`, `package.json` and `node_modules/` don't affect the extension.
+
+## Disclaimer
+
+Anchor Down sends the same requests as the YES website, from your own logged-in browser, at most once every 2 seconds. Automated registration may still go against Vanderbilt's policies, so check them before you use it. Use it at your own risk, and always confirm your schedule in YES afterward.
