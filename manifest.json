@@ -1,0 +1,31 @@
+{
+  "manifest_version": 3,
+  "name": "Anchor Down",
+  "author": "Brian Tang",
+  "description": "Enroll in your entire Vanderbilt YES cart the moment registration opens.",
+  "version": "1.0.0",
+  "background": {
+    "service_worker": "src/background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://more.app.vanderbilt.edu/more/SearchClasses!input.action*",
+        "https://more.app.vanderbilt.edu/more/SearchClasses.action*"
+      ],
+      "js": [
+        "src/enroll.js"
+      ],
+      "run_at": "document_end"
+    }
+  ],
+  "commands": {
+    "toggle-enroll": {
+      "suggested_key": {
+        "default": "Alt+X",
+        "mac": "Alt+X"
+      },
+      "description": "Enroll in every class in your YES cart"
+    }
+  }
+}
