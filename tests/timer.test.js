@@ -291,6 +291,43 @@ test('after its refresh, the reloaded page does not refresh again', async () => 
   reloaded.close();
 });
 
+test('refreshes every 10 minutes while waiting', async () => {
+  const page = openYesPage();
+  const loadedAt = page.now;
+  page.arm(targetIn(page, 60 * 60));
+  const reloads = () => page.messages.filter((m) => m.type === 'reload').length;
+
+  await page.advance(loadedAt + 10 * 60 * 1000 - page.now - 1000);
+  assert.equal(reloads(), 0, 'not before 10 minutes');
+  await page.advance(2000);
+  assert.equal(reloads(), 1, 'at 10 minutes');
+  assert.match(page.$('anchorDownNote').textContent, /^Refreshing the page to keep you logged in/);
+
+  // The reloaded page waits another 10 minutes before the next one.
+  const session = page.session();
+  const now = page.now;
+  page.close();
+  const reloaded = openYesPage({ session, now });
+  const reloadsAfter = () => reloaded.messages.filter((m) => m.type === 'reload').length;
+  await reloaded.advance(9 * 60 * 1000);
+  assert.equal(reloadsAfter(), 0);
+  await reloaded.advance(2 * 60 * 1000);
+  assert.equal(reloadsAfter(), 1);
+  assert.equal(reloaded.stateLabel(), 'Armed');
+  reloaded.close();
+});
+
+test('the 10-minute refresh gives way to the one 3 minutes before', async () => {
+  const page = openYesPage({ hours: () => NOTHING });
+  const target = targetIn(page, 12 * 60);  // 10 minutes after loading is 2 minutes before
+  page.arm(target);
+  await page.advance(target - page.now + 1000);
+  const reloads = page.messages.filter((m) => m.type === 'reload');
+  assert.equal(reloads.length, 1, 'just the 3-minutes-before refresh');
+  assert.ok(page.enrollRequests().length > 0, 'still fired on time');
+  page.close();
+});
+
 test('does not refresh when armed less than 3 minutes ahead', async () => {
   const page = openYesPage();
   const target = targetIn(page, 120);

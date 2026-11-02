@@ -22,6 +22,7 @@
 	const WARN_BEFORE_MS = 60000;        // "1 minute to go" notification
 	const FRONT_BEFORE_S = 20;           // background.js brings the tab forward this early
 	const REFRESH_BEFORE_MS = 3 * 60 * 1000;  // refresh the page this early for a fresh login
+	const REFRESH_EVERY_MS = 10 * 60 * 1000;  // and this often before that, so YES never sits idle
 	const NO_RELOAD_WITHIN_MS = 60000;   // never reload this close to the time
 	const RELOAD_GAP_MS = 2 * 60 * 1000; // at most one login-recovery reload per 2 min
 	const MAX_HOURS = 18;                // usual per-semester limit without approval
@@ -95,6 +96,11 @@
 		if (untilOpen <= REFRESH_BEFORE_MS && untilOpen > NO_RELOAD_WITHIN_MS &&
 			pageLoadedAt < state.target - REFRESH_BEFORE_MS) {
 			reloadPage('Refreshing the page so your login is fresh. It stays armed.');
+		// Before that, refresh every 10 minutes. The background login checks keep
+		// YES's server session going; a real refresh also resets any inactivity
+		// timer on the page itself.
+		} else if (untilOpen > REFRESH_BEFORE_MS && Date.now() - pageLoadedAt >= REFRESH_EVERY_MS) {
+			reloadPage('Refreshing the page to keep you logged in. It stays armed.');
 		}
 		if (!state.warned && untilOpen <= WARN_BEFORE_MS) {
 			state.warned = true;

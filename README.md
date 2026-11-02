@@ -74,6 +74,7 @@ That's the whole list. It can't see any other site, and it only ever adds the cl
 | --- | --- |
 | When you click Arm | Checks your login and cart, and starts keeping your computer awake |
 | Every 4 minutes | Checks your login again. If it has expired, it refreshes the page to sign you back in |
+| Every 10 minutes | Refreshes the YES page so it never sits idle long enough to log you out. It stays armed |
 | 3 minutes before | Refreshes the YES page so your login is fresh. It stays armed |
 | 1 minute before | Notification: 1 minute to go |
 | 20 seconds before | Brings the YES tab and its window to the front |
