@@ -58,6 +58,7 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAla
       get: (id, cb) => cb({ id, windowId: 3 }),
       update: needsCallback('tabs.update', (id, props) => calls.push(['tabs.update', id, props])),
       onRemoved: { addListener: (fn) => { listeners.removed = fn; } },
+      reload: needsCallback('tabs.reload', (id) => calls.push(['tabs.reload', id])),
     },
     windows: { update: needsCallback('windows.update', (id, props) => calls.push(['windows.update', id, props])) },
     notifications: {
@@ -152,6 +153,12 @@ test('sets the badge text and color on the sending tab only', () => {
   ]);
 });
 
+test('reloads the tab that asks', () => {
+  const { calls, listeners } = loadBackground();
+  listeners.message({ type: 'reload' }, fromTab);
+  assert.deepEqual(calls, [['tabs.reload', 7]]);
+});
+
 test('ignores messages that do not come from a tab', () => {
   const { calls, listeners } = loadBackground();
   listeners.message({ type: 'notify', id: 'x', title: 't', message: 'm' }, {});
@@ -168,6 +175,7 @@ test('every Chrome call that can fail is given a callback, so failures never sur
   listeners.message({ type: 'schedule', target: 2_000_000 }, fromTab);
   listeners.alarm({ name: 'anchorDown:7:2000000' });
   listeners.message({ type: 'unschedule' }, fromTab);
+  listeners.message({ type: 'reload' }, fromTab);
   listeners.removed(7);
   assert.deepEqual(callbacks.missing, [], 'calls without a callback: ' + callbacks.missing.join(', '));
 });

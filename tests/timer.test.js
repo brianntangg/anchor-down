@@ -258,6 +258,48 @@ test('stays armed through a page refresh', async () => {
   refreshed.close();
 });
 
+test('refreshes the page once, 3 minutes before, and still fires on time', async () => {
+  const page = openYesPage({ hours: () => NOTHING });
+  const target = targetIn(page, 10 * 60);
+  page.arm(target);
+  await page.advance(target - 3 * 60 * 1000 - page.now - 1000);
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 0, 'not yet');
+  await page.advance(2000);
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 1);
+  assert.match(page.$('anchorDownNote').textContent, /^Refreshing the page/);
+
+  // If the reload never happens, it still fires on time.
+  await page.advance(target - page.now + 1000);
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 1, 'only once');
+  assert.ok(page.enrollRequests().length > 0);
+  page.close();
+});
+
+test('after its refresh, the reloaded page does not refresh again', async () => {
+  const page = openYesPage();
+  const target = targetIn(page, 10 * 60);
+  page.arm(target);
+  await page.advance(target - 3 * 60 * 1000 - page.now + 1000);
+  const session = page.session();
+  const now = page.now;
+  page.close();
+
+  const reloaded = openYesPage({ session, now });
+  await reloaded.advance(60000);
+  assert.equal(reloaded.messages.filter((m) => m.type === 'reload').length, 0);
+  assert.equal(reloaded.stateLabel(), 'Armed');
+  reloaded.close();
+});
+
+test('does not refresh when armed less than 3 minutes ahead', async () => {
+  const page = openYesPage();
+  const target = targetIn(page, 120);
+  page.arm(target);
+  await page.advance(target - page.now);
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 0);
+  page.close();
+});
+
 test('ignores a saved timer whose window already passed', () => {
   const now = Date.now();
   const page = openYesPage({ now, session: { anchorDownTarget: String(now - 10 * 60 * 1000) } });

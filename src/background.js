@@ -23,6 +23,8 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
     schedule(tabId, msg.target);
   } else if (msg.type === 'unschedule') {
     unschedule(tabId);
+  } else if (msg.type === 'reload') {
+    chrome.tabs.reload(tabId, {}, ignoreError);
   } else if (msg.type === 'notify') {
     chrome.notifications.create(msg.id + ':' + tabId, {
       type: 'basic',

@@ -21,6 +21,8 @@
 	const BASELINE_BEFORE_MS = 15000;    // last hours snapshot before firing
 	const WARN_BEFORE_MS = 60000;        // "1 minute to go" notification
 	const FRONT_BEFORE_S = 20;           // background.js brings the tab forward this early
+	const REFRESH_BEFORE_MS = 3 * 60 * 1000;  // refresh the page this early for a fresh login
+	const NO_RELOAD_WITHIN_MS = 60000;   // never reload this close to the time
 	const MAX_HOURS = 18;                // usual per-semester limit without approval
 	const STORAGE_KEY = 'anchorDownTarget';
 	const HOURS_URL = 'https://more.app.vanderbilt.edu/more/StudentClass!getClassHoursSummary.action';
@@ -61,6 +63,8 @@
 	};
 
 	const originalTitle = document.title;
+	const pageLoadedAt = Date.now();
+	let reloadRequested = false;
 	let audio = null;
 	let lastBadge = null;
 	const el = {};  // panel elements, filled in by buildPanel()
@@ -83,6 +87,12 @@
 			if (lastCall) state.baselineFinal = true;
 			state.lastKeepAlive = now;
 			refreshBaseline();
+		}
+		// Refresh once, 3 minutes before, unless the page loaded after that point
+		// (which is also how it knows it already refreshed).
+		if (untilOpen <= REFRESH_BEFORE_MS && untilOpen > NO_RELOAD_WITHIN_MS &&
+			pageLoadedAt < state.target - REFRESH_BEFORE_MS) {
+			reloadPage('Refreshing the page so your login is fresh. It stays armed.');
 		}
 		if (!state.warned && untilOpen <= WARN_BEFORE_MS) {
 			state.warned = true;
@@ -259,6 +269,15 @@
 			(c.numbers.some(function (n) { return remaining.has(n); }) ? left : through).push(c);
 		});
 		return { through: through, left: left };
+	}
+
+	// Asks background.js to reload this tab; the timer re-arms itself afterward.
+	// The timer keeps running meanwhile, so it still fires if the reload fails.
+	function reloadPage(message) {
+		if (reloadRequested) return;
+		reloadRequested = true;
+		setNote(message);
+		send({ type: 'reload' });
 	}
 
 	// ---- Enrolling ----

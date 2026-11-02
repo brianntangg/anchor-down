@@ -30,7 +30,7 @@ To change the shortcut, go to `chrome://extensions/shortcuts`.
 
    To run these checks without arming, click **Check**.
 2. Leave the YES tab open and your laptop lid open. Anchor Down keeps your computer awake until it finishes; the screen may still turn off or lock, which is fine. You can use other tabs and windows; 20 seconds before your time, Anchor Down brings the YES tab to the front.
-3. Refresh the page a few minutes before your time so your login is fresh. The timer stays armed through a refresh, as long as it's the same tab.
+3. Three minutes before your time, it refreshes the YES page so your login is fresh, and stays armed through the refresh. You can also refresh it yourself; it stays armed as long as it's the same tab.
 4. It starts 5 seconds before your time and tries every 2 seconds. It stops as soon as your cart is empty, or 30 seconds after your time at the latest. Then it compares your cart from before and after and lists each class:
    - **✓ CS 3251: enrolled or waitlisted.** It left your cart, so it went through.
    - **✗ ECON 1010: still in your cart.** It didn't go through. Enroll in it by hand right away.
