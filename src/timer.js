@@ -23,8 +23,10 @@
 	const FRONT_BEFORE_S = 20;           // background.js brings the tab forward this early
 	const REFRESH_BEFORE_MS = 3 * 60 * 1000;  // refresh the page this early for a fresh login
 	const NO_RELOAD_WITHIN_MS = 60000;   // never reload this close to the time
+	const RELOAD_GAP_MS = 2 * 60 * 1000; // at most one login-recovery reload per 2 min
 	const MAX_HOURS = 18;                // usual per-semester limit without approval
 	const STORAGE_KEY = 'anchorDownTarget';
+	const RELOAD_KEY = 'anchorDownLastReload';
 	const HOURS_URL = 'https://more.app.vanderbilt.edu/more/StudentClass!getClassHoursSummary.action';
 	const CART_URL = 'https://more.app.vanderbilt.edu/more/StudentClass!getSavedClasses.action';
 	const TIME_ZONE = 'America/Chicago';  // YES enrollment times are Central
@@ -438,7 +440,8 @@
 		setText(el.login, ok
 			? '✓ Logged in, checked ' + time + '. Enrolled ' + hours.enrolled + ' hrs, waitlisted ' + hours.waitlisted + ' hrs.'
 			: '✗ Login check failed at ' + time + '.');
-		if (ok && state.loginOk === false) {
+		if (ok && state.loginOk !== true) {
+			// Includes a page reloaded after a failed check: clear the old warning.
 			setNote('');
 			clearNotification('login');
 		} else if (!ok) {
@@ -446,8 +449,22 @@
 			if (state.target && state.loginOk !== false) {
 				notify('login', 'YES login may have expired', 'Refresh the YES page. The timer stays armed.', true);
 			}
+			if (state.target) recoverLogin();
 		}
 		state.loginOk = ok;
+	}
+
+	// Reloads the page to sign back in, if your Vanderbilt sign-in is still
+	// valid. Not in the last minute, and at most once every 2 minutes (remembered
+	// across the reload, so it can't loop). If YES needs you to log in again, the
+	// notification above and background.js's warning cover it.
+	function recoverLogin() {
+		if (state.target - Date.now() <= NO_RELOAD_WITHIN_MS) return;
+		let last = 0;
+		try { last = Number(sessionStorage.getItem(RELOAD_KEY)) || 0; } catch (e) { /* storage blocked */ }
+		if (Date.now() - last < RELOAD_GAP_MS) return;
+		try { sessionStorage.setItem(RELOAD_KEY, String(Date.now())); } catch (e) { /* storage blocked */ }
+		reloadPage('Your login may have expired. Refreshing the page to sign back in; it stays armed.');
 	}
 
 	// ---- Result ----

@@ -415,21 +415,57 @@ test('no hours warning at exactly 18', async () => {
   page.close();
 });
 
-test('warns when the login check fails, and keeps the timer armed', async () => {
+test('when the login check fails, it warns and reloads the page to sign back in', async () => {
   let loggedIn = false;
   const page = openYesPage({ loggedIn: () => loggedIn });
   page.arm(targetIn(page, 600));
   await page.advance(100);
 
-  assert.equal(page.$('anchorDownNote').textContent, "Can't reach YES. Your login may have expired. Refresh the page. The timer stays armed.");
   assert.match(page.$('anchorDownLogin').textContent, /^✗ Login check failed/);
   assert.equal(page.notifications().at(-1).id, 'login');
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 1);
+  assert.match(page.$('anchorDownNote').textContent, /^Your login may have expired\. Refreshing the page/);
   assert.equal(page.stateLabel(), 'Armed');
 
+  // The reloaded page is logged in again: the warning clears.
+  const session = page.session();
+  const now = page.now;
+  page.close();
   loggedIn = true;
-  await page.advance(4 * 60 * 1000 + 500); // next login check
-  assert.match(page.$('anchorDownLogin').textContent, /^✓ Logged in/);
-  assert.equal(page.$('anchorDownNote').textContent, '');
+  const reloaded = openYesPage({ session, now: now + 2000 });
+  await reloaded.advance(100);
+  assert.match(reloaded.$('anchorDownLogin').textContent, /^✓ Logged in/);
+  assert.equal(reloaded.$('anchorDownNote').textContent, '');
+  assert.ok(reloaded.messages.some((m) => m.type === 'clear' && m.id === 'login'));
+  reloaded.close();
+});
+
+test('does not reload again within 2 minutes if the login is still failing', async () => {
+  const page = openYesPage({ loggedIn: () => false });
+  page.arm(targetIn(page, 600));
+  await page.advance(100);
+  const session = page.session();
+  const now = page.now;
+  page.close();
+
+  const reloaded = openYesPage({ loggedIn: () => false, session, now: now + 5000 });
+  await reloaded.advance(100);
+  assert.equal(reloaded.messages.filter((m) => m.type === 'reload').length, 0);
+  assert.equal(reloaded.$('anchorDownNote').textContent,
+    "Can't reach YES. Your login may have expired. Refresh the page. The timer stays armed.");
+  reloaded.close();
+});
+
+test('does not reload in the last minute', async () => {
+  let loggedIn = true;
+  const page = openYesPage({ loggedIn: () => loggedIn });
+  const target = targetIn(page, 120);
+  page.arm(target);
+  await page.advance(100);
+  loggedIn = false;
+  await page.advance(target - page.now - 10000);  // the last check, 15s before, fails
+  assert.match(page.$('anchorDownLogin').textContent, /^✗ Login check failed/);
+  assert.equal(page.messages.filter((m) => m.type === 'reload').length, 0);
   page.close();
 });
 

@@ -46,7 +46,7 @@ You can follow along without looking at the panel:
 
 Drag the panel by its header, or click **–** to shrink it to just the status.
 
-A red note in the panel means your login may have expired: refresh the page. The timer stays armed.
+If your login expires while it waits, it refreshes the page to sign you back in (not in the last minute). If YES needs you to log in again, you get a notification; log in and go back to class search, and the timer is still armed.
 
 You can hold **Alt+X** while it runs as a backup. Both share the same 2-second limit, so this won't send extra requests.
 
