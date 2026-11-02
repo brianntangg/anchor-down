@@ -26,14 +26,7 @@ chrome.runtime.onMessage.addListener(function (msg, sender) {
   } else if (msg.type === 'reload') {
     chrome.tabs.reload(tabId, {}, ignoreError);
   } else if (msg.type === 'notify') {
-    chrome.notifications.create(msg.id + ':' + tabId, {
-      type: 'basic',
-      iconUrl: chrome.runtime.getURL('icons/icon128.png'),
-      title: msg.title,
-      message: msg.message,
-      priority: 2,
-      requireInteraction: !!msg.sticky
-    }, ignoreError);
+    showNotification(tabId, msg.id, msg.title, msg.message, msg.sticky);
   } else if (msg.type === 'clear') {
     chrome.notifications.clear(msg.id + ':' + tabId, ignoreError);
   } else if (msg.type === 'badge') {
@@ -47,6 +40,17 @@ chrome.notifications.onClicked.addListener(function (notificationId) {
   bringToFront(Number(notificationId.split(':').pop()));
   chrome.notifications.clear(notificationId, ignoreError);
 });
+
+function showNotification(tabId, id, title, message, sticky) {
+  chrome.notifications.create(id + ':' + tabId, {
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL('icons/icon128.png'),
+    title: title,
+    message: message,
+    priority: 2,
+    requireInteraction: !!sticky
+  }, ignoreError);
+}
 
 function bringToFront(tabId) {
   chrome.tabs.get(tabId, function (tab) {
@@ -67,6 +71,7 @@ const FRONT_BEFORE_MS = 20000;
 const TICK_MS = 250;
 const WINDOW_AFTER_MS = 31000;  // a little past timer.js's 30s window
 const ALARM_PREFIX = 'anchorDown:';
+const MISSED_TICKS_WARNING = 8;  // ~2s of ticks not reaching the page
 const tickers = {};             // tabId -> interval id
 
 // Alarm names carry the tab and time, since this script can be restarted
@@ -76,6 +81,8 @@ function alarmName(tabId, target) {
 }
 
 function schedule(tabId, target) {
+  // A (re)armed page clears any "can't enroll" warning.
+  chrome.notifications.clear('cantEnroll:' + tabId, ignoreError);
   // Keep Chrome's Memory Saver from closing the tab while it waits.
   chrome.tabs.update(tabId, { autoDiscardable: false }, ignoreError);
   clearAlarms(tabId, function () {
@@ -118,19 +125,47 @@ chrome.alarms.onAlarm.addListener(function (alarm) {
   const tabId = Number(parts[1]);
   const target = Number(parts[2]);
   bringToFront(tabId);
+  checkTabCanEnroll(tabId);
   startTicking(tabId, target);
 });
+
+// The page answers "ping" only if it's the YES class search page; it says
+// whether it's armed. No answer usually means YES needed a new login and the
+// tab is on the Vanderbilt login page, where the extension doesn't run.
+function checkTabCanEnroll(tabId) {
+  chrome.tabs.sendMessage(tabId, { command: 'ping' }, function (reply) {
+    if (chrome.runtime.lastError || !reply || !reply.armed) warnCantEnroll(tabId);
+  });
+}
+
+function warnCantEnroll(tabId) {
+  showNotification(tabId, 'cantEnroll', "Anchor Down can't enroll",
+    "The YES tab isn't on class search, or isn't armed. Log in to YES and open class search now; it keeps trying until the window ends.",
+    true);
+}
 
 // Each message also counts as activity, which keeps this script running for
 // the whole window.
 function startTicking(tabId, target) {
   stopTicking(tabId);
+  let missed = 0;
+  let warned = false;
   tickers[tabId] = setInterval(function () {
     if (Date.now() > target + WINDOW_AFTER_MS) {
       stopTicking(tabId);
       return;
     }
-    chrome.tabs.sendMessage(tabId, { command: 'tick' }, ignoreError);
+    chrome.tabs.sendMessage(tabId, { command: 'tick' }, function () {
+      if (!chrome.runtime.lastError) {
+        missed = 0;
+        return;
+      }
+      // The page stopped listening, e.g. it left class search mid-window.
+      if (++missed >= MISSED_TICKS_WARNING && !warned) {
+        warned = true;
+        warnCantEnroll(tabId);
+      }
+    });
   }, TICK_MS);
 }
 

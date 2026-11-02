@@ -361,6 +361,14 @@ test('in a background tab, ticks from background.js alone keep it on time', asyn
   page.close();
 });
 
+test('answers background.js pings with whether it is armed', () => {
+  const page = openYesPage();
+  assert.deepEqual(page.ask({ command: 'ping' }), { armed: false });
+  page.arm(targetIn(page, 120));
+  assert.deepEqual(page.ask({ command: 'ping' }), { armed: true });
+  page.close();
+});
+
 test('ignores ticks when not armed', async () => {
   const page = openYesPage();
   page.tick();

@@ -213,7 +213,14 @@ function openYesPage(options = {}) {
     pressAltX() { messageListeners.forEach((fn) => fn({ command: 'toggle-enroll' })); },
 
     /** Delivers a "tick" from background.js. */
-    tick() { messageListeners.forEach((fn) => fn({ command: 'tick' })); },
+    tick() { messageListeners.forEach((fn) => fn({ command: 'tick' }, {}, () => {})); },
+
+    /** Sends a message like background.js would, and returns the page's answer. */
+    ask(message) {
+      let reply;
+      messageListeners.forEach((fn) => fn(message, {}, (r) => { reply = JSON.parse(JSON.stringify(r)); }));
+      return reply;
+    },
 
     /** Moves time forward while background.js ticks every 250ms. */
     async advanceWithTicks(ms) {

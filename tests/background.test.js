@@ -12,7 +12,14 @@ const SOURCE = fs.readFileSync(path.join(ROOT, manifest.background.service_worke
 
 // Runs background.js against a fake chrome API that records every call, with a
 // fake clock: advance(ms) moves time and runs its timers.
-function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAlarms = {} } = {}) {
+// Returned by tabReply when nothing in the tab is listening.
+const NO_RECEIVER = Symbol('no receiver');
+
+// tabReply(msg) is what the YES page answers; by default it's armed.
+function loadBackground({
+  activeTabs = [{ id: 7 }], now = 1_000_000, existingAlarms = {},
+  tabReply = (msg) => (msg.command === 'ping' ? { armed: true } : undefined),
+} = {}) {
   let clock = now;
   const timers = new Map();
   let nextTimer = 1;
@@ -30,7 +37,13 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAla
     const cb = typeof args[args.length - 1] === 'function' ? args.pop() : null;
     if (!cb) callbacks.missing.push(name);
     const result = fn(...args);
-    if (cb) cb(result);
+    if (cb && result === NO_RECEIVER) {
+      chrome.runtime.lastError = { message: 'Could not establish connection. Receiving end does not exist.' };
+      cb();
+      chrome.runtime.lastError = null;
+    } else if (cb) {
+      cb(result);
+    }
     return result;
   };
   const chrome = {
@@ -54,7 +67,10 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAla
     },
     tabs: {
       query: (q, cb) => cb(activeTabs),
-      sendMessage: needsCallback('tabs.sendMessage', (id, msg) => { calls.push(['tabs.sendMessage', id, msg]); }),
+      sendMessage: needsCallback('tabs.sendMessage', (id, msg) => {
+        calls.push(['tabs.sendMessage', id, msg]);
+        return tabReply(msg);
+      }),
       get: (id, cb) => cb({ id, windowId: 3 }),
       update: needsCallback('tabs.update', (id, props) => calls.push(['tabs.update', id, props])),
       onRemoved: { addListener: (fn) => { listeners.removed = fn; } },
@@ -107,6 +123,7 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAla
   return {
     calls: recorded, listeners, callbacks, alarms, advance, fireDueAlarms,
     awake: () => power.awake,
+    notified: (id) => recorded.filter((c) => c[0] === 'notifications.create' && c[1] === id),
     get now() { return clock; },
     ticksSent: () => recorded.filter((c) => c[0] === 'tabs.sendMessage' && c[2].command === 'tick').length,
   };
@@ -295,4 +312,49 @@ test('stays awake while another tab is still armed', () => {
 test('after a restart while waiting, it keeps the computer awake again', () => {
   const bg = loadBackground({ existingAlarms: { 'anchorDown:7:2000000': 1980000 } });
   assert.equal(bg.awake(), 'system');
+});
+
+// ---- Warning when the YES tab can't enroll ----
+
+function armAndFireAlarm(options) {
+  const bg = loadBackground(options);
+  const target = bg.now + 60000;
+  bg.listeners.message({ type: 'schedule', target }, fromTab);
+  bg.advance(40000);
+  bg.fireDueAlarms();
+  return bg;
+}
+
+test('no warning when the YES tab answers that it is armed', () => {
+  const bg = armAndFireAlarm();
+  assert.equal(bg.notified('cantEnroll:7').length, 0);
+});
+
+test('warns when the YES tab does not answer, e.g. it is on the login page', () => {
+  const bg = armAndFireAlarm({ tabReply: () => NO_RECEIVER });
+  const [warning] = bg.notified('cantEnroll:7');
+  assert.equal(warning[2].title, "Anchor Down can't enroll");
+  assert.equal(warning[2].requireInteraction, true);
+});
+
+test('warns when the YES tab answers that it is not armed', () => {
+  const bg = armAndFireAlarm({ tabReply: (msg) => (msg.command === 'ping' ? { armed: false } : undefined) });
+  assert.equal(bg.notified('cantEnroll:7').length, 1);
+});
+
+test('warns once if ticks stop reaching the page for 2 seconds', () => {
+  let listening = true;
+  const bg = armAndFireAlarm({ tabReply: (msg) => (listening ? (msg.command === 'ping' ? { armed: true } : undefined) : NO_RECEIVER) });
+  bg.advance(1000);
+  listening = false;
+  bg.advance(1000);
+  assert.equal(bg.notified('cantEnroll:7').length, 0, 'not after a brief gap');
+  bg.advance(10000);
+  assert.equal(bg.notified('cantEnroll:7').length, 1, 'once, not repeatedly');
+});
+
+test('re-arming clears the warning', () => {
+  const bg = armAndFireAlarm({ tabReply: () => NO_RECEIVER });
+  bg.listeners.message({ type: 'schedule', target: bg.now + 10000 }, fromTab);
+  assert.ok(bg.calls.some((c) => c[0] === 'notifications.clear' && c[1] === 'cantEnroll:7'));
 });

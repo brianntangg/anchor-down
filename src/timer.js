@@ -679,8 +679,11 @@
 
 		// Ticks from background.js keep the timer on time while this tab is in
 		// the background.
-		chrome.runtime.onMessage.addListener(function (message) {
-			if (message && message.command === 'tick') tick();
+		// "ping" lets background.js check this page is here and armed.
+		chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
+			if (!message) return;
+			if (message.command === 'tick') tick();
+			else if (message.command === 'ping') sendResponse({ armed: !!state.target });
 		});
 	}
 
