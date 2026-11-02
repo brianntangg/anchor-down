@@ -369,6 +369,34 @@ test('answers background.js pings with whether it is armed', () => {
   page.close();
 });
 
+test('tells the toolbar popup what the panel shows', async () => {
+  const page = openYesPage({ cart: FULL_CART });
+  page.arm(targetIn(page, 120));
+  await page.advance(100);
+  const status = page.ask({ command: 'status' });
+  assert.equal(status.armed, true);
+  assert.equal(status.state, 'Armed');
+  assert.match(status.countdown, /^Opens in \dm \d+s$/);
+  assert.equal(status.cart, 'In your cart (3): CS 3251, MATH 2810, ECON 1010');
+  assert.match(status.login, /^✓ Logged in/);
+  assert.deepEqual(status.classes, []);
+  page.close();
+});
+
+test('the popup can run Check and Cancel', async () => {
+  const page = openYesPage({ cart: FULL_CART });
+  page.ask({ command: 'cancel' });
+  assert.equal(page.status(), 'Not armed. Alt+X still works.', 'cancel does nothing when not armed');
+  page.ask({ command: 'check' });
+  await page.advance(100);
+  assert.match(page.status(), /^Checked at/);
+
+  page.arm(targetIn(page, 120));
+  page.ask({ command: 'cancel' });
+  assert.equal(page.stateLabel(), 'Not armed');
+  page.close();
+});
+
 test('ignores ticks when not armed', async () => {
   const page = openYesPage();
   page.tick();

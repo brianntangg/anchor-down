@@ -1,0 +1,102 @@
+/* Toolbar popup. Matches the panel in panel.css. */
+
+body {
+  width: 300px;
+  margin: 0;
+  background: #fff;
+  color: #111;
+  font: 13px/1.4 -apple-system, system-ui, sans-serif;
+}
+
+[hidden],
+p:empty,
+ul:empty {
+  display: none !important;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: #866d4b;
+  color: #fff;
+  font-weight: 600;
+}
+
+.content {
+  padding: 10px 12px 12px;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.state {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.dot {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #6b7280;
+}
+
+.countdown {
+  font-size: 16px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+p {
+  margin: 6px 0 0;
+}
+
+.classes {
+  margin: 6px 0 0;
+  padding: 0;
+  list-style: none;
+  font-weight: 600;
+}
+
+.ok {
+  color: #16a34a;
+}
+
+.bad {
+  color: #dc2626;
+}
+
+.warn {
+  color: #b45309;
+}
+
+.small {
+  color: #555;
+  font-size: 12px;
+}
+
+.note {
+  color: #b00020;
+}
+
+.buttons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+button {
+  font: inherit;
+  padding: 4px 12px;
+  cursor: pointer;
+}

@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Anchor Down</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <header class="header">
+    <img src="../icons/icon32.png" alt="" width="18" height="18">
+    <span>Anchor Down</span>
+  </header>
+  <main class="content">
+    <div class="row">
+      <span class="state">
+        <span class="dot" id="dot"></span>
+        <span id="state">Loading…</span>
+      </span>
+      <span class="countdown" id="countdown"></span>
+    </div>
+    <p class="status" id="status"></p>
+    <ul class="classes" id="classes"></ul>
+    <p class="warn" id="warn"></p>
+    <p class="small" id="cart"></p>
+    <p class="small" id="login"></p>
+    <p class="note" id="note"></p>
+    <div class="buttons">
+      <button type="button" id="check" hidden>Check</button>
+      <button type="button" id="cancel" hidden>Cancel</button>
+      <button type="button" id="goto" hidden>Go to YES tab</button>
+      <button type="button" id="open" hidden>Open YES</button>
+    </div>
+  </main>
+  <script src="popup.js"></script>
+</body>
+</html>

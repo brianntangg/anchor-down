@@ -13,9 +13,15 @@ function ignoreError() {
   void chrome.runtime.lastError;
 }
 
-// Requests from timer.js: keeping time, notifications and the toolbar badge.
-// Notification ids end in ":<tabId>" so a click can bring that YES tab forward.
-chrome.runtime.onMessage.addListener(function (msg, sender) {
+// Requests from timer.js (keeping time, notifications, the toolbar badge) and
+// from the popup (which tab is armed). Notification ids end in ":<tabId>" so a
+// click can bring that YES tab forward.
+chrome.runtime.onMessage.addListener(function (msg, sender, sendResponse) {
+  if (msg.type === 'armedTab') {
+    findArmedTab(function (tabId) { sendResponse({ tabId: tabId }); });
+    return true;  // answers asynchronously
+  }
+
   const tabId = sender.tab && sender.tab.id;
   if (!tabId) return;
 
@@ -195,6 +201,19 @@ function updateKeepAwake() {
 
 // On startup (including a restart while waiting), pick up any armed timers.
 updateKeepAwake();
+
+// The tab that's ticking, or else the one with an alarm waiting; null if none.
+function findArmedTab(done) {
+  const ticking = Object.keys(tickers)[0];
+  if (ticking) {
+    done(Number(ticking));
+    return;
+  }
+  chrome.alarms.getAll(function (alarms) {
+    const alarm = (alarms || []).find(function (a) { return a.name.indexOf(ALARM_PREFIX) === 0; });
+    done(alarm ? Number(alarm.name.split(':')[1]) : null);
+  });
+}
 
 chrome.tabs.onRemoved.addListener(function (tabId) {
   unschedule(tabId);

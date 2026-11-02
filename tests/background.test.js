@@ -358,3 +358,27 @@ test('re-arming clears the warning', () => {
   bg.listeners.message({ type: 'schedule', target: bg.now + 10000 }, fromTab);
   assert.ok(bg.calls.some((c) => c[0] === 'notifications.clear' && c[1] === 'cantEnroll:7'));
 });
+
+// ---- The toolbar popup ----
+
+function askArmedTab(bg) {
+  let reply;
+  // A plain copy, since the reply is made in the background script's realm.
+  const async = bg.listeners.message({ type: 'armedTab' }, {}, (r) => { reply = JSON.parse(JSON.stringify(r)); });
+  return { reply, async };
+}
+
+test('tells the popup which tab is armed', () => {
+  const bg = loadBackground();
+  assert.deepEqual(askArmedTab(bg).reply, { tabId: null }, 'none yet');
+
+  bg.listeners.message({ type: 'schedule', target: bg.now + 10 * 60 * 1000 }, { tab: { id: 9 } });
+  assert.deepEqual(askArmedTab(bg).reply, { tabId: 9 }, 'from the waiting alarm');
+  assert.equal(askArmedTab(bg).async, true, 'keeps the reply channel open');
+});
+
+test('tells the popup which tab is ticking', () => {
+  const bg = loadBackground();
+  bg.listeners.message({ type: 'schedule', target: bg.now + 5000 }, { tab: { id: 4 } });
+  assert.deepEqual(askArmedTab(bg).reply, { tabId: 4 });
+});

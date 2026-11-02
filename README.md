@@ -40,6 +40,7 @@ To change the shortcut, go to `chrome://extensions/shortcuts`.
 You can follow along without looking at the panel:
 
 - **Panel:** a colored state (Not armed, Armed, Enrolling, Success, No change), a live countdown, the time of the last login check, and a progress bar with each attempt's time while it runs.
+- **Toolbar popup:** click the Anchor Down icon from any tab to see the status, countdown and result, with **Check**, **Cancel** and **Go to YES tab**.
 - **Toolbar badge:** the Anchor Down icon counts down (`3h`, `12m`, `45s`), shows `GO` while enrolling, then `✓` or `!`. Pin the extension from Chrome's puzzle-piece menu to keep it visible.
 - **Tab title:** shows the countdown, like `⏳ 4:57`, and then the result.
 - **Notifications:** when you arm it, 1 minute before, when it starts enrolling, and with the result. You also get one if your login expires. Click a notification to jump back to the YES tab. On a Mac, allow notifications for Google Chrome in System Settings → Notifications, and turn off Focus / Do Not Disturb.

@@ -679,12 +679,34 @@
 
 		// Ticks from background.js keep the timer on time while this tab is in
 		// the background.
-		// "ping" lets background.js check this page is here and armed.
+		// "ping" lets background.js check this page is here and armed. "status",
+		// "check" and "cancel" come from the toolbar popup.
 		chrome.runtime.onMessage.addListener(function (message, sender, sendResponse) {
 			if (!message) return;
 			if (message.command === 'tick') tick();
 			else if (message.command === 'ping') sendResponse({ armed: !!state.target });
+			else if (message.command === 'status') sendResponse(panelStatus());
+			else if (message.command === 'check') checkNow();
+			else if (message.command === 'cancel' && state.interval) cancel();
 		});
+	}
+
+	// What the panel shows, for the toolbar popup.
+	function panelStatus() {
+		return {
+			armed: !!state.target,
+			state: el.state.textContent,
+			color: el.state.style.color,
+			countdown: el.countdown.textContent,
+			status: el.status.textContent,
+			warn: el.warn.textContent,
+			cart: el.cart.textContent,
+			login: el.login.textContent,
+			note: el.note.textContent,
+			classes: Array.from(el.classes.children).map(function (li) {
+				return { text: li.textContent, ok: li.className === 'ad-ok' };
+			})
+		};
 	}
 
 	// Drag the panel by its header, kept inside the window.
