@@ -1,0 +1,15 @@
+{
+  "name": "anchor-down",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Tests for the Anchor Down Chrome extension. Not part of the extension itself.",
+  "scripts": {
+    "test": "node --test && TZ=America/Los_Angeles node --test"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "jsdom": "^24.1.3"
+  }
+}
