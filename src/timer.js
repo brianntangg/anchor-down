@@ -90,7 +90,8 @@
 		}
 		setState('armed');
 		setText(el.countdown, 'Opens in ' + formatDuration(untilOpen));
-		setStatus('Armed for ' + formatDate(state.target) + '. Starts ' + START_BEFORE_MS / 1000 + ' seconds early.' +
+		setStatus('Armed for ' + formatDate(state.target) + '. Starts ' + START_BEFORE_MS / 1000 + ' seconds early. ' +
+			'Keeping your computer awake; keep the lid open.' +
 			(state.restored ? ' (Kept after page refresh.)' : ''));
 		setBadge(badgeTime(untilOpen), 'armed');
 		setTitle('⏳ ' + formatShort(untilOpen));
@@ -156,7 +157,7 @@
 		clearNotification('result');
 		start(target);
 		notify('status', 'Anchor Down armed', 'Enrolling at ' + formatDate(target) +
-			'. Leave the YES tab open and your computer awake.');
+			'. Your computer will stay awake until it finishes; keep the lid open.');
 	}
 
 	function stop() {

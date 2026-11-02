@@ -81,23 +81,32 @@ function schedule(tabId, target) {
     if (target - FRONT_BEFORE_MS <= Date.now()) {
       startTicking(tabId, target);
     } else {
-      chrome.alarms.create(alarmName(tabId, target), { when: target - FRONT_BEFORE_MS }, ignoreError);
+      chrome.alarms.create(alarmName(tabId, target), { when: target - FRONT_BEFORE_MS }, function () {
+        ignoreError();
+        updateKeepAwake();
+      });
     }
+    updateKeepAwake();
   });
 }
 
 function unschedule(tabId) {
   stopTicking(tabId);
-  clearAlarms(tabId);
+  clearAlarms(tabId, updateKeepAwake);
   chrome.tabs.update(tabId, { autoDiscardable: true }, ignoreError);
 }
 
 function clearAlarms(tabId, done) {
   chrome.alarms.getAll(function (alarms) {
-    (alarms || [])
-      .filter(function (a) { return a.name.indexOf(ALARM_PREFIX + tabId + ':') === 0; })
-      .forEach(function (a) { chrome.alarms.clear(a.name, ignoreError); });
-    if (done) done();
+    const mine = (alarms || []).filter(function (a) { return a.name.indexOf(ALARM_PREFIX + tabId + ':') === 0; });
+    let left = mine.length;
+    if (!left && done) done();
+    mine.forEach(function (a) {
+      chrome.alarms.clear(a.name, function () {
+        ignoreError();
+        if (--left === 0 && done) done();
+      });
+    });
   });
 }
 
@@ -124,9 +133,31 @@ function startTicking(tabId, target) {
 }
 
 function stopTicking(tabId) {
+  if (!(tabId in tickers)) return;
   clearInterval(tickers[tabId]);
   delete tickers[tabId];
+  updateKeepAwake();
 }
+
+// ---- Keeping the computer awake ----
+// While any tab is armed (an alarm is waiting or ticks are running), ask the
+// computer not to sleep. The screen may still turn off or lock; Chrome keeps
+// running either way. Worked out from the alarms each time, so it's still
+// right if Chrome restarts this script while waiting.
+
+function updateKeepAwake() {
+  chrome.alarms.getAll(function (alarms) {
+    const waiting = (alarms || []).some(function (a) { return a.name.indexOf(ALARM_PREFIX) === 0; });
+    if (waiting || Object.keys(tickers).length > 0) {
+      chrome.power.requestKeepAwake('system');
+    } else {
+      chrome.power.releaseKeepAwake();
+    }
+  });
+}
+
+// On startup (including a restart while waiting), pick up any armed timers.
+updateKeepAwake();
 
 chrome.tabs.onRemoved.addListener(function (tabId) {
   unschedule(tabId);

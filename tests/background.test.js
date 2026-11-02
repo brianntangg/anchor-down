@@ -12,11 +12,12 @@ const SOURCE = fs.readFileSync(path.join(ROOT, manifest.background.service_worke
 
 // Runs background.js against a fake chrome API that records every call, with a
 // fake clock: advance(ms) moves time and runs its timers.
-function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000 } = {}) {
+function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000, existingAlarms = {} } = {}) {
   let clock = now;
   const timers = new Map();
   let nextTimer = 1;
-  const alarms = new Map();  // name -> when
+  const alarms = new Map(Object.entries(existingAlarms));  // name -> when
+  const power = { awake: false };
   // Objects made inside the vm are from another realm, so record plain copies
   // that deepEqual can compare.
   const recorded = [];
@@ -24,9 +25,13 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000 } = {}) {
   const listeners = {};
   // Chrome calls that can fail; each should be given a callback.
   const callbacks = { missing: [] };
+  // Like Chrome, runs the callback (if given) once the call is done.
   const needsCallback = (name, fn) => (...args) => {
-    if (typeof args[args.length - 1] !== 'function') callbacks.missing.push(name);
-    return fn(...args);
+    const cb = typeof args[args.length - 1] === 'function' ? args.pop() : null;
+    if (!cb) callbacks.missing.push(name);
+    const result = fn(...args);
+    if (cb) cb(result);
+    return result;
   };
   const chrome = {
     commands: { onCommand: { addListener: (fn) => { listeners.command = fn; } } },
@@ -49,7 +54,7 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000 } = {}) {
     },
     tabs: {
       query: (q, cb) => cb(activeTabs),
-      sendMessage: needsCallback('tabs.sendMessage', (id, msg, cb) => { calls.push(['tabs.sendMessage', id, msg]); if (typeof cb === 'function') cb(); }),
+      sendMessage: needsCallback('tabs.sendMessage', (id, msg) => { calls.push(['tabs.sendMessage', id, msg]); }),
       get: (id, cb) => cb({ id, windowId: 3 }),
       update: needsCallback('tabs.update', (id, props) => calls.push(['tabs.update', id, props])),
       onRemoved: { addListener: (fn) => { listeners.removed = fn; } },
@@ -59,6 +64,10 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000 } = {}) {
       create: needsCallback('notifications.create', (id, opts) => calls.push(['notifications.create', id, opts])),
       clear: needsCallback('notifications.clear', (id) => calls.push(['notifications.clear', id])),
       onClicked: { addListener: (fn) => { listeners.click = fn; } },
+    },
+    power: {
+      requestKeepAwake: (level) => { power.awake = level; },
+      releaseKeepAwake: () => { power.awake = false; },
     },
     action: {
       setBadgeText: needsCallback('setBadgeText', (opts) => calls.push(['setBadgeText', opts])),
@@ -96,6 +105,7 @@ function loadBackground({ activeTabs = [{ id: 7 }], now = 1_000_000 } = {}) {
 
   return {
     calls: recorded, listeners, callbacks, alarms, advance, fireDueAlarms,
+    awake: () => power.awake,
     get now() { return clock; },
     ticksSent: () => recorded.filter((c) => c[0] === 'tabs.sendMessage' && c[2].command === 'tick').length,
   };
@@ -235,4 +245,46 @@ test('closing the tab clears its alarm', () => {
   bg.listeners.message({ type: 'schedule', target: bg.now + 10 * 60 * 1000 }, fromTab);
   bg.listeners.removed(7);
   assert.equal(bg.alarms.size, 0);
+});
+
+// ---- Keeping the computer awake ----
+
+test('keeps the computer awake from arming until the window ends', () => {
+  const bg = loadBackground();
+  assert.equal(bg.awake(), false);
+  const target = bg.now + 60000;
+  bg.listeners.message({ type: 'schedule', target }, fromTab);
+  assert.equal(bg.awake(), 'system', 'awake while waiting for the alarm');
+
+  bg.advance(40000);
+  bg.fireDueAlarms();
+  bg.advance(20000);
+  assert.equal(bg.awake(), 'system', 'awake while ticking');
+
+  bg.advance(40000);
+  assert.equal(bg.awake(), false, 'allowed to sleep once the window ends');
+});
+
+test('lets the computer sleep when cancelled or the tab is closed', () => {
+  const bg = loadBackground();
+  bg.listeners.message({ type: 'schedule', target: bg.now + 10 * 60 * 1000 }, fromTab);
+  bg.listeners.message({ type: 'unschedule' }, fromTab);
+  assert.equal(bg.awake(), false, 'after cancelling');
+
+  bg.listeners.message({ type: 'schedule', target: bg.now + 10 * 60 * 1000 }, fromTab);
+  bg.listeners.removed(7);
+  assert.equal(bg.awake(), false, 'after closing the tab');
+});
+
+test('stays awake while another tab is still armed', () => {
+  const bg = loadBackground();
+  bg.listeners.message({ type: 'schedule', target: bg.now + 10 * 60 * 1000 }, { tab: { id: 7 } });
+  bg.listeners.message({ type: 'schedule', target: bg.now + 20 * 60 * 1000 }, { tab: { id: 8 } });
+  bg.listeners.message({ type: 'unschedule' }, { tab: { id: 7 } });
+  assert.equal(bg.awake(), 'system');
+});
+
+test('after a restart while waiting, it keeps the computer awake again', () => {
+  const bg = loadBackground({ existingAlarms: { 'anchorDown:7:2000000': 1980000 } });
+  assert.equal(bg.awake(), 'system');
 });

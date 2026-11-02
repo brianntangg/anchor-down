@@ -235,6 +235,7 @@ test('shows the time in CT, plus local time if the laptop is not on Central', ()
   page.$('anchorDownTime').value = '2030-01-15T07:00:00';
   page.$('anchorDownArm').click();
   assert.match(page.status(), /^Armed for Tue, Jan 15, 7:00:00\sAM CT/);
+  assert.match(page.status(), /Keeping your computer awake; keep the lid open\./);
   const onCentral = Intl.DateTimeFormat().resolvedOptions().timeZone === 'America/Chicago';
   assert.equal(/your time\)/.test(page.status()), !onCentral);
   page.close();
